@@ -1,0 +1,21 @@
+﻿  Actor.cpp
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\Actor.cpp(74,17): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\Actor.cpp(75,42): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\Actor.cpp(77,30): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\Actor.cpp(86,55): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\Actor.cpp(86,44): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\Actor.cpp(95,17): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\Actor.cpp(96,48): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\Actor.cpp(104,17): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\Actor.cpp(105,48): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\Actor.cpp(112,53): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\Actor.cpp(112,42): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\Actor.cpp(127,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\Actor.cpp(129,18): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+  StudentWorld.cpp
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\StudentWorld.cpp(114,53): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\StudentWorld.cpp(114,42): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\StudentWorld.cpp(118,53): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\3dwar\Desktop\CS 32\Project_3\SuperPeachSisters\StudentWorld.cpp(118,42): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+  Generating Code...
+  SuperPeachSisters.vcxproj -> C:\Users\3dwar\Desktop\CS 32\Project_3\Debug\SuperPeachSisters.exe
