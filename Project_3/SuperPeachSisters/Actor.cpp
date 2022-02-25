@@ -1,8 +1,6 @@
 #include "Actor.h"
 #include "StudentWorld.h"
 
-#include <iostream>
-
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
 
 // Actor
@@ -46,7 +44,7 @@ Inanimate::Inanimate(int ID, int x, int y, int dir, int depth, double size, Stud
 
 // Peach
 Peach::Peach(int x, int y, StudentWorld* sw) 
-	: Animate(IID_PEACH, x, y, 0, 1, 1.0, sw), curr_HP(1), inv_power(false), shoot_power(false), jump_power(false), remaining_Invincibility(0), remaining_jump_distance(0) {}
+	: Animate(IID_PEACH, x, y, 0, 1, 1.0, sw), curr_HP(1), remaining_Invincibility(0), remaining_jump_distance(0), inv_power(false), jump_power(false), shoot_power(false) {}
 
 bool Peach::getHP() const {
 	return curr_HP;
@@ -116,7 +114,6 @@ void Peach::doSomething() {
 			remaining_jump_distance = 0;
 		}
 		else {
-			std::cout << newY << std::endl;
 			moveTo(getX(), newY);
 			remaining_jump_distance--;
 		}
@@ -133,6 +130,7 @@ void Peach::doSomething() {
 		setDirection(180);
 		newX = getX() - 4;
 		if (getWorld()->isBlockingOrOverlapAt(newX, getY(), 'b')) {
+			getWorld()->bonkActor(newX, getY());
 			break;
 		}
 		moveTo(newX, getY());
@@ -141,6 +139,7 @@ void Peach::doSomething() {
 		setDirection(0);
 		newX = getX() + 4;
 		if (getWorld()->isBlockingOrOverlapAt(newX, getY(), 'b')) {
+			getWorld()->bonkActor(newX, getY());
 			break;
 		}
 		moveTo(newX, getY());
@@ -169,24 +168,24 @@ void Peach::doSomething() {
 }
 
 // Block 
-Block::Block(int x, int y, Goodie* goodie, StudentWorld* sw) : Inanimate(IID_BLOCK, x, y, 0, 2, 1.0, sw) {
-	if (goodie != nullptr) {
+Block::Block(int x, int y, char goodie, StudentWorld* sw) : Inanimate(IID_BLOCK, x, y, 0, 2, 1.0, sw) {
+	if (goodie != 0) {
 		this->goodie = goodie;
 		containsGoodie = true;
 	}
 	else {
-		this->goodie = nullptr;
+		this->goodie = 0;
 		containsGoodie = false;
 	}
 }
 
-Block::Block(int x, int y, StudentWorld* sw) : Inanimate(IID_PIPE, x, y, 0, 2, 1.0, sw) {}
+Block::Block(int x, int y, StudentWorld* sw) : Inanimate(IID_PIPE, x, y, 0, 2, 1.0, sw), containsGoodie(false), goodie(0) {}
 
 void Block::bonk() {
 	if (containsGoodie) {
 		getWorld()->playSound(SOUND_POWERUP_APPEARS);
-		getWorld()->releaseGoodie(goodie);
-		goodie = nullptr;
+		getWorld()->releaseGoodie(getX(), getY(), goodie);
+		goodie = 0;
 		containsGoodie = false;
 	}
 	else {
@@ -195,8 +194,7 @@ void Block::bonk() {
 	return;
 }
 
-void Block::doSomething() 
-{
+void Block::doSomething() {
 	return;
 }
 
@@ -254,8 +252,13 @@ Projectile::Projectile(int ID, int x, int y, int dir, int depth, double size, St
 	: Animate(ID, x, y, dir, depth, size, sw) {}
 
 void Projectile::doSomething() {
-	if (checkOverlap() && getWorld()->getObjectTypeAt(getX(), getY(), 'p') == 'e') {
+	if (isFriendly() && checkOverlap() && getWorld()->getObjectTypeAt(getX(), getY(), 'p') == 'e') {
 		getWorld()->damageObjectAt(getX(), getY());
+		setDead();
+		return;
+	}
+	else if (!isFriendly() && checkOverlap() && getWorld()->getObjectTypeAt(getX(), getY(), 'e') == 'p'){
+		getWorld()->bonkPeach();
 		setDead();
 		return;
 	}
@@ -272,6 +275,10 @@ void Projectile::doSomething() {
 
 Peach_Fireball::Peach_Fireball(int x, int y, int dir, StudentWorld* sw) : Projectile(IID_PEACH_FIRE, x, y, dir, 1, 1.0, sw) {}
 
+Piranha_Fireball::Piranha_Fireball(int x, int y, int dir, StudentWorld* sw) : Projectile(IID_PIRANHA_FIRE, x, y, dir, 1, 1.0, sw) {}
+
+Shell::Shell(int x, int y, int dir, StudentWorld* sw) : Projectile(IID_SHELL, x, y, dir, 1, 1.0, sw) {}
+
 // Enemy
 
 Enemy::Enemy(int ID, int x, int y, int dir, int depth, double size, StudentWorld* sw) : Animate(ID, x, y, dir, depth, size, sw) {}
@@ -282,6 +289,7 @@ bool Enemy::isDamageable() const {
 
 void Enemy::getDamaged() {
 	setDead();
+	getWorld()->increaseScore(100);
 }
 
 void Enemy::doSomething() {
@@ -291,7 +299,6 @@ void Enemy::doSomething() {
 		getWorld()->bonkPeach();
 		return;
 	}
-
 	if (getDirection() == 0 && getWorld()->isBlockingOrOverlapAt(getX() + 1, getY(), 'b')) {
 		setDirection(180);
 	}
@@ -302,7 +309,7 @@ void Enemy::doSomething() {
 	if (getDirection() == 0 && !getWorld()->isBlockingOrOverlapAt(getX() + SPRITE_WIDTH + 1, getY() - 1, 'b')) {
 		setDirection(180);
 	}
-	else if (getDirection() == 180 && !getWorld()->isBlockingOrOverlapAt(getX() - 1, getY() - 1, 'b')) {
+	else if (getDirection() == 180 && !getWorld()->isBlockingOrOverlapAt(getX() - SPRITE_WIDTH, getY() - 1, 'b')) {
 		setDirection(0);
 	}
 
@@ -315,6 +322,12 @@ void Enemy::doSomething() {
 }
 
 void Enemy::bonk() {
+	if (checkOverlap() && getWorld()->getObjectTypeAt(getX(), getY(), 'e') == 'p') {
+		if (getWorld()->hasPeachPower(0)) {
+			getWorld()->playSound(SOUND_PLAYER_KICK);
+			getDamaged();
+		}
+	}
 	return;
 }
 Goomba::Goomba(int x, int y, int dir, StudentWorld* sw) : Enemy(IID_GOOMBA, x, y, dir, 0, 1.0, sw) {}
@@ -322,9 +335,43 @@ Goomba::Goomba(int x, int y, int dir, StudentWorld* sw) : Enemy(IID_GOOMBA, x, y
 Koopa::Koopa (int x, int y, int dir, StudentWorld* sw) : Enemy(IID_KOOPA, x, y, dir, 0, 1.0, sw) {}
 
 void Koopa::getDamaged() {
+	if (isAlive()) {
+		Enemy::getDamaged();
+		getWorld()->releaseProjectile(getX(), getY(), getDirection(), 's');
+	}
 	return;
 }
 
+Piranha::Piranha(int x, int y, int dir, StudentWorld* sw) : Enemy(IID_PIRANHA, x, y, dir, 0, 1.0, sw), firing_delay(0) {}
+
+void Piranha::doSomething() {
+	if (!isAlive())
+		return;
+	increaseAnimationNumber();
+	if (checkOverlap() && getWorld()->getObjectTypeAt(getX(), getY(), 'e') == 'p') {
+		getWorld()->bonkPeach();
+		return;
+	}
+	if (getWorld()->getPeachHeight() >= getY() - 1.5 * SPRITE_HEIGHT && getWorld()->getPeachHeight() < getY() + 1.5 * SPRITE_HEIGHT) {
+		if (getWorld()->getPeachLocation() > getX())
+			setDirection(0);
+		else
+			setDirection(180);
+		if (firing_delay > 0) {
+			firing_delay--;
+			return;
+		}
+		else {
+			int distance = getWorld()->getPeachLocation() - getX();
+			if (distance > -8 * SPRITE_WIDTH && distance < 8 * SPRITE_WIDTH) {
+				getWorld()->releaseProjectile(getX(), getY(), getDirection(), 'e');
+				getWorld()->playSound(SOUND_PIRANHA_FIRE);
+				firing_delay = 40;
+			}
+		}
+	}
+	return;
+}
 
 // Flag
 Flag::Flag(int x, int y, StudentWorld* sw) : Inanimate(IID_FLAG, x, y, 0, 1, 1.0, sw) {}

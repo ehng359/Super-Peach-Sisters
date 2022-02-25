@@ -4,11 +4,12 @@
 #include "GameWorld.h"
 #include "Level.h"
 #include <string>
-
-// Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
-#include "Actor.h"
 #include <vector>
 
+// Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
+class Actor;
+class Peach;
+class Goodie;
 class StudentWorld : public GameWorld
 {
 public:
@@ -27,16 +28,19 @@ public:
   void decPeachLives();
   void incPeachLives();
   void bonkPeach();
+  bool hasPeachPower(int type) const;
   void setPeachPower(int type);
+  int getPeachLocation() const;
+  int getPeachHeight() const;
 
-  void releaseGoodie(Goodie* goodie);
+  void releaseGoodie(int x, int y, char goodie);
   void releaseProjectile(int x, int y, int dir, char type);
   bool isBlockingOrOverlapAt(int x, int y, char type);
-  bool isPosOverlap(int x, int y, Actor const * a);
   char getObjectTypeAt(int x, int y, char notType);
   void damageObjectAt(int x, int y);
 
 private:
+	bool isPosOverlap(int x, int y, Actor const* a);
 	Level m_l;
 	std::vector<Actor*> actorV;
 	Peach* p;

@@ -22,8 +22,7 @@ public:
 
 	StudentWorld* getWorld() const;
 private:
-	bool m_alive; 
-	char object_type;
+	bool m_alive;
 	StudentWorld* m_sw;
 };
 
@@ -63,6 +62,8 @@ public:
 	virtual bool isDamageable() const;
 	virtual void getDamaged();
 	virtual void bonk();
+
+	virtual bool hasShell() const { return false; }
 };
 
 	class Goomba : public Enemy {
@@ -74,17 +75,24 @@ public:
 	public:
 		Koopa(int x, int y, int dir, StudentWorld* sw);
 		virtual void getDamaged();
+		virtual bool hasShell() { return true; }
 	};
 
 	class Piranha : public Enemy {
 	public:
 		Piranha(int x, int y, int dir, StudentWorld* sw);
+		virtual void doSomething();
+	private:
+		int firing_delay;
 	};
 
 class Projectile : public Animate {
 public:
 	Projectile(int ID, int x, int y, int dir, int depth, double size, StudentWorld* sw);
 	virtual void doSomething();
+	virtual bool isFriendly() {
+		return true;
+	}
 };
 
 	class Shell : public Projectile {
@@ -100,6 +108,9 @@ public:
 	class Piranha_Fireball : public Projectile {
 	public:
 		Piranha_Fireball(int x, int y, int dir, StudentWorld* sw);
+		virtual bool isFriendly() {
+			return false;
+		}
 	};
 
 class Goodie : public Animate {
@@ -130,13 +141,13 @@ private:
 class Block : public Inanimate {
 public:
 	Block(int x, int y, StudentWorld* sw);
-	Block(int x, int y, Goodie* goodie, StudentWorld* sw);
+	Block(int x, int y, char goodie, StudentWorld* sw);
 	virtual void doSomething();
 	virtual bool preventsMovement() const;
 	virtual void bonk();
 private:
 	bool containsGoodie;
-	Goodie* goodie;
+	char goodie;
 };
 
 class Pipe : public Block {
@@ -153,5 +164,6 @@ public:
 class Mario : public Inanimate {
 public:
 	Mario();
+	virtual void doSomething();
 };
 #endif // ACTOR_H_
