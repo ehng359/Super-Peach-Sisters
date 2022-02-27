@@ -20,35 +20,30 @@ public:
   virtual int move();
   virtual void cleanUp();
 
-  void setLevelStatus(std::string status);
+  void setLevelStatus(std::string status);	// Adjusts the current level status dependent on whether the flag/mario has been reached.
 
   void bonkActor(int x, int y);
   
   // Altering Peach
-  void decPeachLives();
-  void incPeachLives();
-  void bonkPeach();
-  bool hasPeachPower(int type) const;
-  void setPeachPower(int type);
-  int getPeachX() const;
-  int getPeachY() const;
+  void decPeachLives();	// Decrements Peaches lives.
+  void incPeachLives();	// Increments Peaches lives.
+  void bonkPeach();		// Directly calls bonk() on Peach.
+  bool hasPeachPower(int type) const;	// Determines whetehr or not Peach has a particular power (star = 0, shoot = 1, jump = 2)
+  void setPeachPower(int type);	// Sets a Peach power depending on the integer input provided (star = 0, shoot = 1, jump = 2)
+  void damagePeach();	// Directly calls getDamaged() on Peach.
+  int getPeachX() const;	// Returns Peach's x location.
+  int getPeachY() const;	// Returns Peach's y location.
 
-  void releaseGoodie(int x, int y, char goodie);
-  void releaseProjectile(int x, int y, int dir, char type);
-  bool isBlockingOrOverlapAt(int x, int y, char type);
-  char getObjectTypeAt(int x, int y, char notType);
-  void damageObjectAt(int x, int y);
+  void releaseGoodie(int x, int y, char goodie);	// Releases a goodie above an item block that was recently bonked.
+  void releaseProjectile(int x, int y, int dir, char type);	// Releases a projectile to move inside the game world.
+  bool isBlockingOrOverlapAt(int x, int y, char type);	// Determines whether an object is blocking or overlapping (depending on the type indicated).
+  char getObjectTypeAt(int x, int y, char notType);	// Returns the object type of an actor at a location based on characteristics and "non-type" filter.
+  void damageObjectAt(int x, int y);	// Damages an object at the location x, y, if even damageable.
 
 private:
-	bool isPosOverlap(int x, int y, Actor const* a);
-	Level m_l;
-	std::vector<Actor*> actorV;
-	Peach* p;
-	int numDead;
-	std::string levelCompleted;
+	bool isPosOverlap(int x, int y, Actor const* a);	// Helper function to determine collision/hitboxes (considering the left-bottom, right-bottom, left-top and right-top ranges).
+	std::vector<Actor*> actorV;	// Container for all actors in the game.
+	Peach* p;	// Pointer for holding Peach.
+	std::string levelCompleted;	// Indicator for whether or not a level (or the game) has been completed.
 };
 #endif // STUDENTWORLD_H_
-
-//Hint: Since your StudentWorld class holds all of your game’s actors, it makes sense to add a public
-//method to it that can be used by all of your actors to determine if a given slot is occupied by a blocking
-//object.For instance : if (studentWorldPtr->isBlockingOrOverlapAt(x, y)) { … }

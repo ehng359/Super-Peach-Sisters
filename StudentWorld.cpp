@@ -16,99 +16,105 @@ GameWorld* createStudentWorld(string assetPath)
 // Students:  Add code to this file, StudentWorld.h, Actor.h, and Actor.cpp
 
 StudentWorld::StudentWorld(string assetPath) 
-    : GameWorld(assetPath), m_l(Level(assetPath)), p(nullptr), numDead(0), levelCompleted("") {}
+    : GameWorld(assetPath), p(nullptr), levelCompleted("") {}
 
 StudentWorld::~StudentWorld() {
-    cleanUp();
+    cleanUp();  // Calls the clean up function in order to remove remaining actors from the actor container.
 }
 
 void StudentWorld::setLevelStatus(std::string status) {
-    levelCompleted = status;
+    levelCompleted = status;    // Sets the level status to the status held by the objective (LVL_COMPLETE for flags and GAME_COMPLETE for Mario).
 }
 
 void StudentWorld::decPeachLives() {
-    p->setLives(p->getHP() - 1);
+    p->setLives(p->getHP() - 1);        // Decrements Peach's current lives by 1.
 }
 
 void StudentWorld::incPeachLives() {
-    if (p->getHP() == 1)
+    if (p->getHP() == 1)                // Incrementss Peach's current lives by 1.
         p->setLives(p->getHP() + 1);
 }
 
 bool StudentWorld::hasPeachPower(int type) const {
-    return p->hasPower(type);
+    return p->hasPower(type);           //  Returns true if Peach has the power associated to the integer type and false otherwise.
+}                                       // Star = 0, Shoot = 1, Jump = 2.
+
+void StudentWorld::setPeachPower(int type) {    // Sets Peach's power depending on the associated integer type.
+    if (p->hasPower(type) && type != 0)         // Star = 0, Shoot = 1, Jump = 2.
+        return;                                 // Function returns automatically if Peach already has the associated power (unless if it
+    p->setPower(type);                          // is star).
 }
 
-void StudentWorld::setPeachPower(int type) {
-    if (p->hasPower(type) && type != 0)
-        return;
-    p->setPower(type);
+void StudentWorld::damagePeach() {  // Attempts to directly damage Peach.
+    p->getDamaged();
 }
 
-int StudentWorld::getPeachY() const {
+int StudentWorld::getPeachY() const {   // Returns Peach's y-location.
     return p->getY();
 }
 
-int StudentWorld::getPeachX() const {
+int StudentWorld::getPeachX() const {   // Returns Peach's x-location.
     return p->getX();
 }
 
+// Helper function that compares the hitbox surrounding an x and y coordinate for one actor and the x and y coordinate for actor a.
 bool StudentWorld::isPosOverlap(int x, int y, Actor const * a) {
     int upper_pos = y + SPRITE_HEIGHT - 1;
-    int right_pos = x + SPRITE_WIDTH - 1;
-    if (((x <= (a->getX() + SPRITE_WIDTH - 1) && x >= a->getX() && y <= (a->getY() + SPRITE_HEIGHT - 1) && y >= (a->getY()))
-        || (right_pos <= a->getX() + SPRITE_WIDTH - 1 && right_pos >= a->getX() && ((y <= (a->getY() + SPRITE_HEIGHT - 1) && y >= a->getY())
-            || (upper_pos <= a->getY() + SPRITE_HEIGHT - 1 && upper_pos >= a->getY())))))
+    int right_pos = x + SPRITE_WIDTH - 1;   // Calculates the upper position as well as the right most position.
+    if (((x <= (a->getX() + SPRITE_WIDTH - 1) && x >= a->getX() && ((y <= (a->getY() + SPRITE_HEIGHT - 1) && y >= (a->getY()))              // If bottom-left and upper-left corners are within the actor's range or
+        || (upper_pos <= a->getY() + SPRITE_HEIGHT - 1 && upper_pos >= a->getY())))                                                         // the bottom-right and upper-right corners of x are within the actor's range,
+        || (right_pos <= a->getX() + SPRITE_WIDTH - 1 && right_pos >= a->getX() && ((y <= (a->getY() + SPRITE_HEIGHT - 1) && y >= a->getY())// return true to indicate overlap and false otherwise.
+        || (upper_pos <= a->getY() + SPRITE_HEIGHT - 1 && upper_pos >= a->getY())))))
         return true;
     return false;
 }
 
 bool StudentWorld::isBlockingOrOverlapAt(int x, int y, char type) {
     switch (type) {
-    case 'b':
-        for (vector<Actor*>::iterator it = actorV.begin(); it != actorV.end(); it++)
-            if ((*it)->preventsMovement() && isPosOverlap (x, y, *it))
-                return true;
+    case 'b':   // In the case of blocking: 
+        for (vector<Actor*>::iterator it = actorV.begin(); it != actorV.end(); it++)    // For each actor, if the actor prevents movement and is overlapping
+            if ((*it)->preventsMovement() && isPosOverlap (x, y, *it))                  // with an actor's potentially new location, then return true (indicating
+                return true;                                                            // that the area is being blocked).
         break;
-    case 'o':
-        int count = 0;
+    case 'o':   // In the case of overlap:
+        int count = 0;                                                                  // For each actor,
         for (vector<Actor*>::iterator it = actorV.begin(); it != actorV.end(); it++)
-            if (isPosOverlap (x, y, *it) && (*it)->isAlive()) {
+            if (isPosOverlap (x, y, *it) && (*it)->isAlive()) {                         // increment a count if an actor is within range of x and y.
                 count++;
             }
-        if (isPosOverlap(x, y, p))
+        if (isPosOverlap(x, y, p))  // If the actor at position x, y is overlapping with Peach, increment by 1.
             count++;
-        if (count > 1)
+        if (count > 1)  // If that count is greater than 1, meaning there are more than 1 actors in that spot, return overlap to be true.
             return true;
         break;
     }
-    return false;
+    return false;   // Otherwise if there is no blocking nor overlap (depending on the type), return having blocking or overlap to be false.
 }
 
 char StudentWorld::getObjectTypeAt(int x, int y, char notType){
     vector<Actor*>::iterator it = actorV.begin();
-    if (isPosOverlap(x, y, p) && notType != 'p') {
-        return 'p';
+    if (isPosOverlap(x, y, p) && notType != 'p') {  // If the x, y location is overlapping with Peach's location and the "filter" notType isn't 'p' for Peach,
+        return 'p';                                 // return 'p'.
     }
-    for (; it != actorV.end(); it++) {
+    for (; it != actorV.end(); it++) {  // For each actor in the game:
         switch (notType) {
         case 'p':
-            if (isPosOverlap(x, y, *it) && (*it)->isDamageable() && (*it)->isAlive())
-                return 'e';
+            if (isPosOverlap(x, y, *it) && (*it)->isDamageable() && (*it)->isAlive())   // If the position x, y is overlapping with an actor, and such actor is alive/damageable,
+                return 'e';                                                             // return 'e' for enemy as it directly matches an "enemy's" descriptors.
             break;
         default:
             break;
         }
     }
-    return '0';
+    return '0'; // If no such object was found, then we return char '0' to indicate no different object type found.
 }
 
 
 void StudentWorld::releaseGoodie(int x, int y, char goodie) {
-    switch (goodie) {
+    switch (goodie) {   // Depending on the goodie type ('f' for flower, 'm' for mushroom and 's' for star),
     case 'f':
-        actorV.push_back(new Flower(x, y + 8, this));
-        break;
+        actorV.push_back(new Flower(x, y + 8, this));   // Push back a new goodie item onto the actor vector altogether,
+        break;                                          // one block above the item block.
     case 'm':
         actorV.push_back(new Mushroom(x, y + 8, this));
         break;
@@ -119,10 +125,10 @@ void StudentWorld::releaseGoodie(int x, int y, char goodie) {
 }
 
 void StudentWorld::releaseProjectile(int x, int y, int dir, char type) {
-    switch (type) {
+    switch (type) { // Depending on the projectile type ('s' for shell, 'p' for peach_fireball, and 'e' for piranha_fireball)
     case 's': // case shell
-        actorV.push_back(new Shell(x, y, dir, this));
-        break;
+        actorV.push_back(new Shell(x, y, dir, this));   // Push back a new projectile item onto the actor vector altogether,
+        break;                                          // made in the direction of the parent actor introducing the object.
     case 'p': // case peach
         actorV.push_back(new Peach_Fireball(x, y, dir, this));
         break;
@@ -134,19 +140,19 @@ void StudentWorld::releaseProjectile(int x, int y, int dir, char type) {
 
 void StudentWorld::bonkActor(int x, int y) {
     for (vector<Actor*>::iterator it = actorV.begin(); it != actorV.end(); it++) {
-        if (isPosOverlap(x, y, *it)) {
-            (*it)->bonk();
+        if (isPosOverlap(x, y, *it)) {  // For each actor in the vector, if it overlaps with the coordinate provided,
+            (*it)->bonk();              // bonk the actor.
         }
     }
 }
 
 void StudentWorld::bonkPeach() {
-    p->bonk();
+    p->bonk();  // Bonk Peach.
 }
 
 void StudentWorld::damageObjectAt(int x, int y) {
-    for (vector<Actor*>::iterator it = actorV.begin(); it != actorV.end(); it++) {
-        if ((*it)->isDamageable() && isPosOverlap(x, y, *it) && (*it)->isAlive()) {
+    for (vector<Actor*>::iterator it = actorV.begin(); it != actorV.end(); it++) {  // For each actor in the vector, if it overlaps with the coordinate provided,
+        if ((*it)->isDamageable() && isPosOverlap(x, y, *it) && (*it)->isAlive()) { // damage the actor.
             (*it)->getDamaged();
         }
     }
@@ -156,25 +162,25 @@ int StudentWorld::init()
 {
     Level lev(assetPath());
     ostringstream newLevel;
-    newLevel << "level0" << getLevel() << ".txt";
+    newLevel << "level0" << getLevel() << ".txt";   // Loads the current level of the game.
     string level_file = newLevel.str();
     Level::LoadResult result = lev.loadLevel(level_file);
-    if (result == Level::load_fail_file_not_found) {
-        cerr << "Could not find level01.txt data file" << endl;
+    if (result == Level::load_fail_file_not_found) {                                // If the whole level cannot be found,
+        cerr << "Could not find level0" << getLevel() << ".txt data file" << endl;  // return a level error.
         return GWSTATUS_LEVEL_ERROR;
     }
-    else if (result == Level::load_fail_bad_format) {
-        cerr << "level01.txt is improperly formatted" << endl;
+    else if (result == Level::load_fail_bad_format) {                               // If the level is improperly formatted (i.e no surrounding blocks)
+        cerr << "level0" << getLevel() << ".txt is improperly formatted" << endl;   // return a level error.
         return GWSTATUS_LEVEL_ERROR;
     }
-    else if (result == Level::load_success)
+    else if (result == Level::load_success)     // If the load is otherwise successful:
     {
         cerr << "Successfully loaded level" << endl;
         Level::GridEntry ge;
         int dir;
-        for (int w = 0; w < GRID_WIDTH; w++) {
-            for (int h = 0; h < GRID_WIDTH; h++) {
-                ge = lev.getContentsOf(w, h); // x=5, y=10
+        for (int w = 0; w < GRID_WIDTH; w++) {              // For each row and column of the level file's grid,
+            for (int h = 0; h < GRID_WIDTH; h++) {          // push each actor (block, enemy, Peach, flag, etc) into the
+                ge = lev.getContentsOf(w, h); // x=5, y=10  // overarching world to load up the game/assets.
                 switch (ge)
                 {
                 case Level::koopa:
@@ -226,40 +232,35 @@ int StudentWorld::init()
             }
         }
     }
-    return GWSTATUS_CONTINUE_GAME;
+    return GWSTATUS_CONTINUE_GAME;  // Return to continue the game.
 }
 
 int StudentWorld::move()
 {
-    // This code is here merely to allow the game to build, run, and terminate after you hit enter.
-    // Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
-    if (p->isAlive()) {
+    if (p->isAlive()) {     // If Peach is alive, have her perform some action.
         p->doSomething();
     }
     for (vector<Actor*>::iterator it = actorV.begin(); it != actorV.end(); it++) {
-        if ((*it)->isAlive()) {
-            (*it)->doSomething();
-            if (!p->isAlive() || getLives() == 0) {
-                this->playSound(SOUND_PLAYER_DIE);
+        if ((*it)->isAlive()) {                         // For each actor in the container,
+            (*it)->doSomething();                       // if the actor is alive, have the actor do something specific to their roles.
+            if (!p->isAlive() || getLives() == 0) {     // If Peach dies or total lives drop to 0, decrement the gameLives and return the
+                this->playSound(SOUND_PLAYER_DIE);      // status indicating that the player died.
                 decLives();
                 return GWSTATUS_PLAYER_DIED;
             }
-            if (levelCompleted == "LVL_COMPLETE") {
-                levelCompleted = "";
-                playSound(SOUND_FINISHED_LEVEL);
+            if (levelCompleted == "LVL_COMPLETE") {     // If the status of the level becomes completed,
+                levelCompleted = "";                    // play the sound for the having finished a level
+                playSound(SOUND_FINISHED_LEVEL);        // and return the status indicating passing the level.
                 return GWSTATUS_FINISHED_LEVEL;
             }
             if (levelCompleted == "GAME_COMPLETE") {
-                playSound(SOUND_GAME_OVER);
-                return GWSTATUS_PLAYER_WON;
-            }
-        }
-        else {
-            numDead++;
+                playSound(SOUND_GAME_OVER);             // If the status of the level indicates that the game has been completed,
+                return GWSTATUS_PLAYER_WON;             // play the sound for having finished the game and return an indication for
+            }                                           // having beaten it.
         }
     }
-    for (vector<Actor*>::iterator it = actorV.begin(); it != actorV.end();) {
-            if (!((*it)->isAlive())) {
+    for (vector<Actor*>::iterator it = actorV.begin(); it != actorV.end();) {   // For each dead actor, delete their allocated memory
+            if (!((*it)->isAlive())) {                                          // and remove them from the vector container.
                 delete(*it);
                 it = actorV.erase(it);
             }
@@ -267,7 +268,7 @@ int StudentWorld::move()
                 it++;
     }
 
-    // Update the score
+    // Update the player information including lives, current level, total points, and currently holding powerups.
     ostringstream displayText;
     displayText << "Lives: " << getLives() << "  Level: ";
     displayText.fill('0');
@@ -284,18 +285,19 @@ int StudentWorld::move()
     std::string text = displayText.str();
     setGameStatText(text);
 
+    // Continue the game.
     return GWSTATUS_CONTINUE_GAME;
 }
 
 void StudentWorld::cleanUp()
 {
-    if (p != nullptr) {
-        delete p;
+    if (p != nullptr) { // If Peach has not already been deleted and set to nullptr,
+        delete p;       // delete Peach and set the pointer to nullptr.
         p = nullptr;
     }
     if (actorV.begin() != actorV.end())
-        for (std::vector<Actor*>::iterator it = actorV.begin(); it != actorV.end();) {
-            delete(*it);
+        for (std::vector<Actor*>::iterator it = actorV.begin(); it != actorV.end();) {  // For each actor in the vector container,
+            delete(*it);                                                                // delete the actor.
             it = actorV.erase(it);
         }
 }
