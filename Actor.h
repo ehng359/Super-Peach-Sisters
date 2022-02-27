@@ -12,7 +12,6 @@ public:
 	void setDead();
 
 	virtual bool preventsMovement() const;
-	bool checkOverlap();
 
 	virtual void doSomething() = 0;
 	virtual void getDamaged() {};
@@ -42,6 +41,7 @@ public:
 	Peach(int x, int y, StudentWorld* sw);
 	bool isInvincible() const;
 	bool getHP() const;
+	bool isDamageable() const { return true;  }
 	bool hasPower(int type) const; // star = 0, shoot = 1, jump = 2
 	void setPower(int type);
 	void setLives(int value);
@@ -59,10 +59,9 @@ public:
 	Enemy(int ID, int x, int y, int dir, int depth, double size, StudentWorld* sw);
 	virtual void doSomething();
 	virtual bool isDamageable() const;
+	virtual bool overlapWithPeach();
 	virtual void getDamaged();
 	virtual void bonk();
-
-	virtual bool hasShell() const { return false; }
 };
 
 	class Goomba : public Enemy {
@@ -74,7 +73,6 @@ public:
 	public:
 		Koopa(int x, int y, int dir, StudentWorld* sw);
 		virtual void getDamaged();
-		virtual bool hasShell() { return true; }
 	};
 
 	class Piranha : public Enemy {
@@ -154,15 +152,21 @@ public:
 	Pipe(int x, int y, StudentWorld* sw);
 };
 
-class Flag : public Inanimate {
+class Objective : public Inanimate {
 public:
-	Flag(int x, int y, StudentWorld* sw);
-	virtual void doSomething();	
+	Objective(int ID, int x, int y, int dir, int depth, double size, std::string compType, StudentWorld* sw);
+	virtual void doSomething();
+private:
+	std::string completionType;
 };
 
-class Mario : public Inanimate {
+class Flag : public Objective {
+public:
+	Flag(int x, int y, StudentWorld* sw);
+};
+
+class Mario : public Objective {
 public:
 	Mario(int x, int y, StudentWorld* sw);
-	virtual void doSomething();
 };
 #endif // ACTOR_H_

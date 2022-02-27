@@ -45,11 +45,11 @@ void StudentWorld::setPeachPower(int type) {
     p->setPower(type);
 }
 
-int StudentWorld::getPeachHeight() const {
+int StudentWorld::getPeachY() const {
     return p->getY();
 }
 
-int StudentWorld::getPeachLocation() const {
+int StudentWorld::getPeachX() const {
     return p->getX();
 }
 
@@ -92,13 +92,11 @@ char StudentWorld::getObjectTypeAt(int x, int y, char notType){
     }
     for (; it != actorV.end(); it++) {
         switch (notType) {
-        case 'e':
-            break;
         case 'p':
             if (isPosOverlap(x, y, *it) && (*it)->isDamageable() && (*it)->isAlive())
                 return 'e';
             break;
-        case 'g':
+        default:
             break;
         }
     }
@@ -154,7 +152,6 @@ void StudentWorld::damageObjectAt(int x, int y) {
     }
 }
 
-
 int StudentWorld::init()
 {
     Level lev(assetPath());
@@ -180,8 +177,6 @@ int StudentWorld::init()
                 ge = lev.getContentsOf(w, h); // x=5, y=10
                 switch (ge)
                 {
-                case Level::empty:
-                    break;
                 case Level::koopa:
                     dir = randInt(0, 180);
                     if (dir > 90)
@@ -231,7 +226,6 @@ int StudentWorld::init()
             }
         }
     }
-
     return GWSTATUS_CONTINUE_GAME;
 }
 

@@ -23,12 +23,6 @@ bool Actor::isAlive() const{
 	return m_alive;
 }
 
-bool Actor::checkOverlap() {
-	if (getWorld()->isBlockingOrOverlapAt(getX(), getY(), 'o'))
-		return true;
-	return false;
-}
-
 // Animate
 Animate::Animate(int ID, int x, int y, int dir, int depth, double size, StudentWorld * sw)
 	: Actor(ID, x, y, dir, depth, size, sw) {}
@@ -39,7 +33,7 @@ Inanimate::Inanimate(int ID, int x, int y, int dir, int depth, double size, Stud
 
 // Peach
 Peach::Peach(int x, int y, StudentWorld* sw) 
-	: Animate(IID_PEACH, x, y, 0, 1, 1.0, sw), curr_HP(1), remaining_Invincibility(0), remaining_jump_distance(0), inv_power(false), jump_power(false), shoot_power(false) {}
+	: Animate(IID_PEACH, x, y, 0, 1, 1.0, sw), curr_HP(1), remaining_Invincibility(0), remaining_jump_distance(0), inv_power(false), jump_power(false), shoot_power(false), temp_inv(0) {}
 
 bool Peach::getHP() const {
 	return curr_HP;
@@ -105,7 +99,6 @@ void Peach::doSomething() {
 		return;
 
 	int keyPress, newX, newY;
-	std::cout << remaining_Invincibility << std::endl;
 	if (inv_power || temp_inv) {
 		remaining_Invincibility--;
 		if (remaining_Invincibility <= 0) {
@@ -227,7 +220,7 @@ bool Goodie::isDamageable() const{
 }
 
 void Goodie::doSomething() {
-	if (checkOverlap() && getWorld()->getObjectTypeAt(getX(), getY(), 'g') == 'p') {
+	if (getWorld()->getObjectTypeAt(getX(), getY(), 'g') == 'p') {
 		getWorld()->increaseScore(point_value);
 		getWorld()->setPeachPower(type);
 		getWorld()->incPeachLives();
@@ -264,13 +257,12 @@ Projectile::Projectile(int ID, int x, int y, int dir, int depth, double size, St
 	: Animate(ID, x, y, dir, depth, size, sw) {}
 
 void Projectile::doSomething() {
-	if (isFriendly() && checkOverlap() && getWorld()->getObjectTypeAt(getX(), getY(), 'p') == 'e') {
+	if (isFriendly() && getWorld()->getObjectTypeAt(getX(), getY(), 'p') == 'e') {
 		getWorld()->damageObjectAt(getX(), getY());
 		setDead();
-		std::cout << "hiaosdf" << std::endl;
 		return;
 	}
-	else if (!isFriendly() && checkOverlap() && getWorld()->getObjectTypeAt(getX(), getY(), 'e') == 'p'){
+	else if (!isFriendly() && getWorld()->getObjectTypeAt(getX(), getY(), 'e') == 'p'){
 		getWorld()->bonkPeach();
 		setDead();
 		return;
@@ -305,18 +297,23 @@ void Enemy::getDamaged() {
 	getWorld()->increaseScore(100);
 }
 
-void Enemy::doSomething() {
-	if (!isAlive())
-		return;
-	if (checkOverlap() && getWorld()->getObjectTypeAt(getX(), getY(), 'e') == 'p') {
+bool Enemy::overlapWithPeach(){
+	if (getWorld()->getObjectTypeAt(getX(), getY(), 'e') == 'p') {
 		getWorld()->bonkPeach();
 		if (getWorld()->hasPeachPower(0)) {
 			getWorld()->playSound(SOUND_PLAYER_KICK);
 			getDamaged();
-			std::cout << "was damaged" << std::endl;
 		}
-		return;
+		return true;
 	}
+	return false;
+}
+
+void Enemy::doSomething() {
+	if (!isAlive())
+		return;
+	if (overlapWithPeach())
+		return;
 	if (getDirection() == 0 && getWorld()->isBlockingOrOverlapAt(getX() + 1, getY(), 'b')) {
 		setDirection(180);
 	}
@@ -340,7 +337,7 @@ void Enemy::doSomething() {
 }
 
 void Enemy::bonk() {
-	if (checkOverlap() && getWorld()->getObjectTypeAt(getX(), getY(), 'e') == 'p') {
+	if (getWorld()->getObjectTypeAt(getX(), getY(), 'e') == 'p') {
 		if (getWorld()->hasPeachPower(0)) {
 			getWorld()->playSound(SOUND_PLAYER_KICK);
 			getDamaged();
@@ -366,16 +363,11 @@ void Piranha::doSomething() {
 	if (!isAlive())
 		return;
 	increaseAnimationNumber();
-	if (checkOverlap() && getWorld()->getObjectTypeAt(getX(), getY(), 'e') == 'p') {
-		getWorld()->bonkPeach();
-		if (getWorld()->hasPeachPower(0)) {
-			getWorld()->playSound(SOUND_PLAYER_KICK);
-			getDamaged();
-		}
+	if (overlapWithPeach()) {
 		return;
 	}
-	if (getWorld()->getPeachHeight() >= getY() - 1.5 * SPRITE_HEIGHT && getWorld()->getPeachHeight() < getY() + 1.5 * SPRITE_HEIGHT) {
-		if (getWorld()->getPeachLocation() > getX())
+	if (getWorld()->getPeachY() >= getY() - 1.5 * SPRITE_HEIGHT && getWorld()->getPeachY() < getY() + 1.5 * SPRITE_HEIGHT) {
+		if (getWorld()->getPeachX() > getX())
 			setDirection(0);
 		else
 			setDirection(180);
@@ -384,7 +376,7 @@ void Piranha::doSomething() {
 			return;
 		}
 		else {
-			int distance = getWorld()->getPeachLocation() - getX();
+			int distance = getWorld()->getPeachX() - getX();
 			if (distance > -8 * SPRITE_WIDTH && distance < 8 * SPRITE_WIDTH) {
 				getWorld()->releaseProjectile(getX(), getY(), getDirection(), 'e');
 				getWorld()->playSound(SOUND_PIRANHA_FIRE);
@@ -395,27 +387,20 @@ void Piranha::doSomething() {
 	return;
 }
 
-// End Goal
-Flag::Flag(int x, int y, StudentWorld* sw) : Inanimate(IID_FLAG, x, y, 0, 1, 1.0, sw) {}
+// Objective
+Objective::Objective(int ID, int x, int y, int dir, int depth, double size, std::string compType, StudentWorld* sw)
+	: Inanimate(ID, x, y, dir, depth, size, sw), completionType(compType){}
 
-void Flag::doSomething() {
+void Objective::doSomething() {
 	if (!isAlive())
 		return;
-	else if (checkOverlap()) {
+	else if (getWorld()->getObjectTypeAt(getX(), getY(), 'o') == 'p') {
 		getWorld()->increaseScore(1000);
 		setDead();
-		getWorld()->setLevelStatus("LVL_COMPLETE");
+		getWorld()->setLevelStatus(completionType);
 	}
 }
 
-Mario::Mario(int x, int y, StudentWorld* sw) : Inanimate(IID_MARIO, x, y, 0, 1, 1.0, sw) {}
+Flag::Flag(int x, int y, StudentWorld* sw) : Objective(IID_FLAG, x, y, 0, 1, 1.0, "LVL_COMPLETE", sw) {}
 
-void Mario::doSomething() {
-	if (!isAlive())
-		return;
-	if (checkOverlap() && getWorld()->getObjectTypeAt(getX(), getY(), 'e') == 'p') {
-		getWorld()->increaseScore(1000);
-		setDead();
-		getWorld()->setLevelStatus("GAME_COMPLETE");
-	}
-}
+Mario::Mario(int x, int y, StudentWorld* sw) : Objective(IID_MARIO, x, y, 0, 1, 1.0, "GAME_COMPLETE", sw) {}

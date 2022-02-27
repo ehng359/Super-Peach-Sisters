@@ -30,8 +30,8 @@ public:
   void bonkPeach();
   bool hasPeachPower(int type) const;
   void setPeachPower(int type);
-  int getPeachLocation() const;
-  int getPeachHeight() const;
+  int getPeachX() const;
+  int getPeachY() const;
 
   void releaseGoodie(int x, int y, char goodie);
   void releaseProjectile(int x, int y, int dir, char type);
